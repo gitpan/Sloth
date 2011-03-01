@@ -1,6 +1,6 @@
 package Sloth::Method;
 BEGIN {
-  $Sloth::Method::VERSION = '0.01';
+  $Sloth::Method::VERSION = '0.02';
 }
 # ABSTRACT: The implementation of a single HTTP method on a resource
 
@@ -9,6 +9,10 @@ use Moose::Role;
 use Data::TreeValidator::Sugar qw( branch );
 use HTTP::Throwable::Factory qw( http_throw );
 use Try::Tiny;
+
+has c => (
+    is => 'ro',
+);
 
 
 requires 'execute';

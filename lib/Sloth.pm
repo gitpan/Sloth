@@ -1,6 +1,6 @@
 package Sloth;
 BEGIN {
-  $Sloth::VERSION = '0.01';
+  $Sloth::VERSION = '0.02';
 }
 # ABSTRACT: A PSGI compatible REST framework
 
@@ -9,17 +9,25 @@ use MooseX::NonMoose;
 
 use aliased 'Sloth::Request';
 
+use HTTP::Message::PSGI;
 use HTTP::Throwable::Factory qw(http_throw);
 use Module::Pluggable::Object;
 use Moose::Util qw( does_role );
 use Path::Router;
 use Plack::Request;
+use Plack::Response;
 use Try::Tiny;
 
 extends 'Plack::Component';
 
+has c => (
+    is => 'ro'
+);
 
-sub resource_arguments { }
+
+sub resource_arguments {
+    return ( c => shift->c );
+}
 
 
 has representations => (
@@ -88,28 +96,43 @@ has router => (
 );
 
 
+sub mock {
+    my ($self, $request) = @_;
+    $request->header(Accept => 'mock/ref') unless $request->header('Accept');
+    $self->_request($request->to_psgi);
+}
+
+
 sub call {
     my ($self, $env) = @_;
-    my $request = Plack::Request->new($env);
-
     my $ret = try {
-        if(my $route = $self->router->match($request->path)) {
-            return $route->target->handle_request(
-                Request->new(
-                    plack_request => $request,
-                    path_components => $route->mapping
-                )
-            )->finalize;
-        }
-        else {
-            http_throw('NotFound');
-        }
+        return Plack::Response->new(
+            200 => [] => $self->_request($env)
+        )->finalize;
     } catch {
         $_->as_psgi;
     };
 
     return $ret;
 };
+
+sub _request {
+    my ($self, $env) = @_;
+    my $request = Plack::Request->new($env);
+
+    if(my $route = $self->router->match($request->path)) {
+        $route->target->handle_request(
+            Request->new(
+                plack_request => $request,
+                path_components => $route->mapping
+            )
+        )
+    }
+    else {
+        http_throw('NotFound');
+    }
+}
+
 
 1;
 
@@ -185,6 +208,19 @@ L<Sloth::Resource>.
 Generate a set of parameters that will be passed to resources. If your resources
 all require a set of common, shared objects, you can override this to provide
 those extra initialization arguments.
+
+=head2 mock
+
+    $self->mock(GET '/foo')
+
+Allows you to give a L<HTTP::Request> object to your application, and
+have be requested, and possibly treated slightly different than other
+requests.
+
+If an Accept header is not present in the request, Sloth will automatically
+set it to C<Accept: mock/ref>. You can then provide a representation that
+returns a Perl reference, rather than actually performing any serialization.
+This can make testing your resources and methods significantly easier.
 
 =head2 call
 

@@ -1,6 +1,6 @@
 package Sloth::Resource;
 BEGIN {
-  $Sloth::Resource::VERSION = '0.01';
+  $Sloth::Resource::VERSION = '0.02';
 }
 # ABSTRACT: A resource that exposed by the REST server
 
@@ -9,7 +9,15 @@ use namespace::autoclean;
 
 use HTTP::Throwable::Factory 'http_throw';
 use Module::Pluggable::Object;
-use Plack::Response;
+
+has c => (
+    is => 'ro'
+);
+
+
+sub resource_arguments {
+    return ( c => shift->c );
+}
 
 
 has representations => (
@@ -37,7 +45,7 @@ has methods => (
         return {
             map {
                 my ($method) = $_ =~ /.*::([a-z]*)$/i;
-                uc($method) => $_->new
+                uc($method) => $_->new($self->resource_arguments);
             } grep {
                 $_->does('Sloth::Method')
             } $mpo->plugins
@@ -72,9 +80,7 @@ sub handle_request {
         my $serializer = $self->_serializer($accept)
             or next;
 
-        return Plack::Response->new(
-            200 => [] => $serializer->serialize($resource)
-        ) or http_throw('NotAcceptable');
+        return $serializer->serialize($resource);
     }
 
     http_throw('NotAcceptable');
@@ -112,6 +118,14 @@ resource namespace (for example, C<Resource::Pancake> would look for
 C<Resource::Pancake::GET> and so on).
 
 =head1 METHODS
+
+=head2 resource_arguments
+
+    $self->resource_arguments : @List
+
+Generate a set of parameters that will be passed to methods. If your methods
+all require a set of common, shared objects, you can override this to provide
+those extra initialization arguments.
 
 =head2 handle_request
 

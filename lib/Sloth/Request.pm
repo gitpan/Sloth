@@ -1,6 +1,6 @@
 package Sloth::Request;
 BEGIN {
-  $Sloth::Request::VERSION = '0.01';
+  $Sloth::Request::VERSION = '0.02';
 }
 use Moose;
 use namespace::autoclean;
