@@ -1,20 +1,39 @@
 package Sloth::Request;
 BEGIN {
-  $Sloth::Request::VERSION = '0.03';
+  $Sloth::Request::VERSION = '0.04';
 }
 use Moose;
 use namespace::autoclean;
 
+use Plack::Request;
+
 has plack_request => (
     is => 'ro',
+    isa => 'Plack::Request',
     required => 1,
-    handles => [qw( path method query_parameters header body_parameters )],
+    handles => qr{.*}
 );
 
 has path_components => (
     required => 1,
     is => 'ro'
 );
+
+has router => (
+    is => 'ro',
+    required => 1
+);
+
+
+sub uri_for {
+    my ($self, @args) = @_;
+    my $qp = @args % 2 ? pop(@args) : {};
+    my $relative = $self->router->uri_for(@args) or return;
+    my $uri = $self->base;
+    $uri->path($uri->path . $relative);
+    $uri->query_form(%$qp);
+    return $uri->as_string;
+}
 
 1;
 
@@ -26,6 +45,19 @@ __END__
 =head1 NAME
 
 Sloth::Request
+
+=head1 METHODS
+
+=head2 uri_for
+
+    $self->uri_for(
+        resource => 'users',
+        name => $user_name,
+        { page => $page }
+    )
+
+Create a URI from a resource name, set of path components and an optional hash
+reference of query parameters.
 
 =head1 AUTHOR
 

@@ -14,6 +14,7 @@ lib/Sloth/Request.pm
 lib/Sloth/RequestParser.pm
 lib/Sloth/RequestParser/Form.pm
 lib/Sloth/Resource.pm
+lib/Sloth/Response.pm
 t/lib/Zoo.pm
 t/lib/Zoo/Representation/Text.pm
 t/lib/Zoo/Resource/Animal.pm

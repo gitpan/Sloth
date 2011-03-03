@@ -1,6 +1,6 @@
 package Sloth;
 BEGIN {
-  $Sloth::VERSION = '0.03';
+  $Sloth::VERSION = '0.04';
 }
 # ABSTRACT: A PSGI compatible REST framework
 
@@ -35,16 +35,16 @@ has representations => (
     default => sub {
         my $self = shift;
         my $prefix = $self->meta->name . '::Representation';
-        return [
+        return {
             map {
-                $_->new
+                $_->content_type => $_->new
             } grep {
                 does_role($_ => 'Sloth::Representation');
             } Module::Pluggable::Object->new(
                 search_path => $prefix,
                 require => 1
             )->plugins
-        ];
+        };
     },
     lazy => 1
 );
@@ -106,9 +106,7 @@ sub mock {
 sub call {
     my ($self, $env) = @_;
     my $ret = try {
-        return Plack::Response->new(
-            200 => [] => $self->_request($env)
-        )->finalize;
+        return $self->_request($env);
     } catch {
         $_->as_psgi;
     };
@@ -124,9 +122,10 @@ sub _request {
         $route->target->handle_request(
             Request->new(
                 plack_request => $request,
-                path_components => $route->mapping
+                path_components => $route->mapping,
+                router => $self->router
             )
-        )
+        )->finalize;
     }
     else {
         http_throw('NotFound');

@@ -1,6 +1,6 @@
 package Sloth::Representation;
 BEGIN {
-  $Sloth::Representation::VERSION = '0.03';
+  $Sloth::Representation::VERSION = '0.04';
 }
 # ABSTRACT: An object capable of creating a representation of a resource
 

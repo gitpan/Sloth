@@ -1,6 +1,6 @@
 package Sloth::Resource;
 BEGIN {
-  $Sloth::Resource::VERSION = '0.03';
+  $Sloth::Resource::VERSION = '0.04';
 }
 # ABSTRACT: A resource that exposed by the REST server
 
@@ -9,6 +9,10 @@ use namespace::autoclean;
 
 use HTTP::Throwable::Factory 'http_throw';
 use Module::Pluggable::Object;
+use REST::Utils qw( best_match );
+use Scalar::Util qw( blessed );
+use String::CamelCase 'decamelize';
+use Try::Tiny;
 
 has c => (
     is => 'ro'
@@ -22,10 +26,12 @@ sub resource_arguments {
 
 has representations => (
     required => 1,
-    isa => 'ArrayRef',
-    traits => [ 'Array' ],
+    isa => 'HashRef',
+    traits => [ 'Hash' ],
     handles => {
-        representations => 'elements'
+        representations => 'values',
+        accepts => 'keys',
+        representation => 'get'
     }
 );
 
@@ -83,12 +89,24 @@ has _routes => (
                 my $router = Path::Router->new;
                 $router->add_route(
                     $_->path => (
+                        defaults => {
+                            resource => $self->name,
+                        },
                         target => $self
                     )
                 );
                 $router;
             } $self->_method_handlers
         ];
+    }
+);
+
+has name => (
+    is => 'ro',
+    default => sub {
+        my $self = shift;
+        my ($name) = $self->meta->name =~ /^.*::(.*)$/;
+        return decamelize($name);
     }
 );
 
@@ -108,17 +126,29 @@ sub handle_request {
             allow => [ $self->supported_methods ]
         });
 
-    my $resource = $method->process_request($request);
-
-    my @accept = $request->header('Accept');
-    for my $accept ($request->header('Accept')) {
-        my $serializer = $self->_serializer($accept)
-            or next;
-
-        return $serializer->serialize($resource);
+    my $serializer;
+    if($self->accepts and my $best_match = best_match(
+        [ $self->accepts ],
+        $request->header('Accept')
+    )) {
+        $serializer = $self->representation($best_match);
     }
 
-    http_throw('NotAcceptable');
+    try {
+        # This is done in 2 steps because we might not need to serialize if we
+        # throw a 2xx exception.
+        return $method->process_request($request, $serializer);
+    }
+    catch {
+        if(blessed($_) && $_->does('HTTP::Throwable')) {
+            $_->throw;
+        }
+        else {
+            $_
+                ? http_throw(BadRequest => { message => $_ || '' })
+                : http_throw('BadRequest')
+        }
+    };
 }
 
 1;
@@ -136,7 +166,7 @@ Sloth::Resource - A resource that exposed by the REST server
 
 =head2 representations
 
-A C<ArrayRef[Sloth::Representation]> of all known representations of resources.
+A C<Map[Str => Sloth::Representation]> of all known representations of resources.
 
 By default, this will be taken from L<Sloth>, your main Sloth application.
 However, if this resource only has specific representations that differ from the
