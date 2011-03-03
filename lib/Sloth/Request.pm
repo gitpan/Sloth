@@ -1,6 +1,6 @@
 package Sloth::Request;
 BEGIN {
-  $Sloth::Request::VERSION = '0.02';
+  $Sloth::Request::VERSION = '0.03';
 }
 use Moose;
 use namespace::autoclean;
@@ -8,7 +8,7 @@ use namespace::autoclean;
 has plack_request => (
     is => 'ro',
     required => 1,
-    handles => [qw( path method query_parameters header )],
+    handles => [qw( path method query_parameters header body_parameters )],
 );
 
 has path_components => (

@@ -11,6 +11,8 @@ lib/Sloth/Manual/Architecture.pod
 lib/Sloth/Method.pm
 lib/Sloth/Representation.pm
 lib/Sloth/Request.pm
+lib/Sloth/RequestParser.pm
+lib/Sloth/RequestParser/Form.pm
 lib/Sloth/Resource.pm
 t/lib/Zoo.pm
 t/lib/Zoo/Representation/Text.pm

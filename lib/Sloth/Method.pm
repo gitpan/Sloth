@@ -1,6 +1,6 @@
 package Sloth::Method;
 BEGIN {
-  $Sloth::Method::VERSION = '0.02';
+  $Sloth::Method::VERSION = '0.03';
 }
 # ABSTRACT: The implementation of a single HTTP method on a resource
 
@@ -77,6 +77,12 @@ sub _collect_errors {
         @child
     );
 }
+
+has path => (
+    isa => 'Str',
+    default => '',
+    is => 'ro'
+);
 
 1;
 
