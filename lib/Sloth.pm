@@ -1,6 +1,6 @@
 package Sloth;
 BEGIN {
-  $Sloth::VERSION = '0.04';
+  $Sloth::VERSION = '0.05';
 }
 # ABSTRACT: A PSGI compatible REST framework
 

@@ -32,6 +32,7 @@ my %WriteMakefileArgs = (
     'Plack::Test' => '0.9967',
     'REST::Utils' => '0.04',
     'Scalar::Util' => '1.23',
+    'String::CamelCase' => '0.02',
     'Test::Fatal' => '0.003',
     'Test::More' => '0.96',
     'Test::Routine' => '0.004',
@@ -39,7 +40,7 @@ my %WriteMakefileArgs = (
     'aliased' => '0.30',
     'namespace::autoclean' => '0.11'
   },
-  'VERSION' => '0.04',
+  'VERSION' => '0.05',
   'test' => {
     'TESTS' => 't/*.t'
   }

@@ -1,6 +1,6 @@
 package Sloth::RequestParser::Form;
 BEGIN {
-  $Sloth::RequestParser::Form::VERSION = '0.04';
+  $Sloth::RequestParser::Form::VERSION = '0.05';
 }
 # ABSTRACT: A request parser for application/x-www-urlencoded data
 use Moose;

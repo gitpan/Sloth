@@ -1,6 +1,6 @@
 package Sloth::RequestParser;
 BEGIN {
-  $Sloth::RequestParser::VERSION = '0.04';
+  $Sloth::RequestParser::VERSION = '0.05';
 }
 # ABSTRACT: An object that can parse requests into hash references
 use Moose::Role;

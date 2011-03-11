@@ -1,6 +1,6 @@
 package Sloth::Method;
 BEGIN {
-  $Sloth::Method::VERSION = '0.04';
+  $Sloth::Method::VERSION = '0.05';
 }
 # ABSTRACT: The implementation of a single HTTP method on a resource
 
@@ -41,6 +41,15 @@ has request_data_validator => (
 );
 
 
+our $req_serializer;
+
+
+sub try_serialize {
+    my ($self, $obj) = @_;
+    http_throw('NotAcceptable') unless $req_serializer;
+    return $req_serializer->serialize($obj);
+}
+
 sub process_request {
     my ($self, $request, $serializer) = @_;
 
@@ -49,7 +58,10 @@ sub process_request {
         my $parser = $self->request_parser($request->header('Content-Type'))
             or http_throw('UnsupportedMediaType');
 
-        %args = $parser->parse($request);
+        %args = (
+            $parser->parse($request),
+            %args
+        );
     }
     else {
         %args = (
@@ -58,6 +70,7 @@ sub process_request {
         );
     }
 
+    local $req_serializer = $serializer;
     my $result = $self->request_data_validator->process({ %args });
 
     http_throw('BadRequest' => {
@@ -70,11 +83,11 @@ sub process_request {
         return $response;
     }
     else {
-        http_throw('NotAcceptable') unless $serializer;
         Sloth::Response->new(
             HTTP_OK, [
                 'Content-Type' => $serializer->content_type
-            ], $serializer->serialize($response)
+            ],
+            $self->try_serialize($response)
         );
     }
 }
@@ -153,6 +166,15 @@ Executes the implemented HTTP method (for example a GET or DELETE operation)
 and optionally returns a resource to represent back to the user. Takes an
 object that represents the cleaned input parameters - a combination of
 path arguments, query paramaters and the parsed body (if there was one).
+
+=head2 try_serialize
+
+    $self->try_serialize($object)
+
+If you are returning a custom L<Sloth::Response> from your method body, you
+may still wish to serialize some data into the response body. By using
+C<try_serialize> you will get correct handling of the C<Accept:> header
+from the client.
 
 =head1 AUTHOR
 

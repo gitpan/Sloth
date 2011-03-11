@@ -1,6 +1,6 @@
 package Sloth::Response;
 BEGIN {
-  $Sloth::Response::VERSION = '0.04';
+  $Sloth::Response::VERSION = '0.05';
 }
 
 use strict;
